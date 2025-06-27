@@ -2,9 +2,9 @@ name: React CI/CD Pipeline (Master Branch)
 
 on:
   push:
-    branches: [master]  # Changed from main to master
+    branches: [master]
   pull_request:
-    branches: [master]  # Changed from main to master
+    branches: [master]
 
 env:
   NODE_VERSION: 18.x
@@ -25,19 +25,7 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
-          payload: |
-            {
-              "text": "📦 Installation started - ${{ github.repository }}",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*🛠 Installation Complete*\n*Repository:* ${{ github.repository }}\n*Status:* Success ✅\n*Branch:* master"  # Changed from ref_name to explicit master
-                  }
-                }
-              ]
-            }
+          payload: '{"text":"📦 Installation started - ${{ github.repository }}","blocks":[{"type":"section","text":{"type":"mrkdwn","text":"*🛠 Installation Complete*\n*Repository:* ${{ github.repository }}\n*Status:* Success ✅\n*Branch:* master"}}]}'
 
   build:
     needs: install
@@ -54,23 +42,11 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
-          payload: |
-            {
-              "text": "🏗 Build completed - ${{ github.repository }}",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*🏗 Build Completed*\n*Repository:* ${{ github.repository }}\n*Status:* Success ✅\n*Branch:* master\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"
-                  }
-                }
-              ]
-            }
+          payload: '{"text":"🏗 Build completed - ${{ github.repository }}","blocks":[{"type":"section","text":{"type":"mrkdwn","text":"*🏗 Build Completed*\n*Repository:* ${{ github.repository }}\n*Status:* Success ✅\n*Branch:* master\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"}}]}'
 
   deploy:
     needs: build
-    if: github.ref == 'refs/heads/master'  # Changed from main to master
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -87,16 +63,4 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
-          payload: |
-            {
-              "text": "🚀 Deployment successful!",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*🚀 Deployment Successful!*\n*Branch:* master\n*URL:* https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/\n*Commit:* ${GITHUB_SHA:0:7}\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"
-                  }
-                }
-              ]
-            }
+          payload: '{"text":"🚀 Deployment successful!","blocks":[{"type":"section","text":{"type":"mrkdwn","text":"*🚀 Deployment Successful!*\n*Branch:* master\n*URL:* https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/\n*Commit:* ${{ github.sha }}\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"}}]}'
