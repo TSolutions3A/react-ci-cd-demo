@@ -62,19 +62,45 @@ jobs:
     if: github.ref == 'refs/heads/master' && needs.build.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+         fetch-depth: 0  # Important: Fetches all history and tags
+    
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - run: npm install
-      - run: npm run build
-      - uses: peaceiris/actions-gh-pages@v3
+        
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Build project
+        run: npm run build
+        
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
+            github_token: ${{ secrets.GITHUB_TOKEN }}
+            publish_dir: ./build
+            force_orphan: true  # Ensures clean deployment
+            keep_files: false   # Removes old files
+        
       - name: Notify Slack - Deployment
         uses: slackapi/slack-github-action@v1.23.0
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
-          payload: '{"text":"🚀 Deployment successful!","blocks":[{"type":"section","text":{"type":"mrkdwn","text":"*🚀 Deployment Successful!*\n*Branch:* master\n*URL:* https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/\n*Commit:* ${GITHUB_SHA:0:7}\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"}}]}'
+          payload: |
+            {
+                "text": "🚀 Deployment successful!",
+                "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                    "type": "mrkdwn",
+                    "text": "*🚀 Deployment Successful!*\n*Branch:* master\n*URL:* https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/\n*Commit:* ${{ github.sha }}\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"
+                    }
+                }
+                ]
+            }
