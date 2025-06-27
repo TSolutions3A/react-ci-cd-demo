@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="2" failures="1" errors="0" time="19.165">
+  <testsuite name="App Component" errors="0" failures="1" skipped="0" timestamp="2025-06-27T05:55:39" time="8.551" tests="2">
+    <testcase classname="App Component renders &quot;Learn React&quot; link" name="App Component renders &quot;Learn React&quot; link" time="0.02">
+    </testcase>
+    <testcase classname="App Component button click increases count" name="App Component button click increases count" time="0.004">
+      <failure>TestingLibraryElementError: Unable to find an element with the text: /count is/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;div
+      class=&quot;App&quot;
+    &gt;
+      &lt;header
+        class=&quot;App-header&quot;
+      &gt;
+        &lt;img
+          alt=&quot;logo&quot;
+          class=&quot;App-logo&quot;
+          src=&quot;logo.svg&quot;
+        /&gt;
+        &lt;p&gt;
+          Edit 
+          &lt;code&gt;
+            src/App.js
+          &lt;/code&gt;
+           and save to reload.
+        &lt;/p&gt;
+        &lt;a
+          class=&quot;App-link&quot;
+          href=&quot;https://reactjs.org&quot;
+          rel=&quot;noopener noreferrer&quot;
+          target=&quot;_blank&quot;
+        &gt;
+          Learn React
+        &lt;/a&gt;
+      &lt;/header&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+    at Object.getElementError (D:\Work\react-ci-cd-demo\node_modules\@testing-library\dom\dist\config.js:37:19)
+    at D:\Work\react-ci-cd-demo\node_modules\@testing-library\dom\dist\query-helpers.js:76:38
+    at D:\Work\react-ci-cd-demo\node_modules\@testing-library\dom\dist\query-helpers.js:52:17
+    at getByText (D:\Work\react-ci-cd-demo\node_modules\@testing-library\dom\dist\query-helpers.js:95:19)
+    at Object.&lt;anonymous&gt; (D:\Work\react-ci-cd-demo\src\App.test.js:13:27)
+    at Promise.then.completed (D:\Work\react-ci-cd-demo\node_modules\jest-circus\build\utils.js:391:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (D:\Work\react-ci-cd-demo\node_modules\jest-circus\build\utils.js:316:10)
+    at _callCircusTest (D:\Work\react-ci-cd-demo\node_modules\jest-circus\build\run.js:218:40)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at _runTest (D:\Work\react-ci-cd-demo\node_modules\jest-circus\build\run.js:155:3)
+    at _runTestsForDescribeBlock (D:\Work\react-ci-cd-demo\node_modules\jest-circus\build\run.js:66:9)
+    at _runTestsForDescribeBlock (D:\Work\react-ci-cd-demo\node_modules\jest-circus\build\run.js:60:9)
+    at run (D:\Work\react-ci-cd-demo\node_modules\jest-circus\build\run.js:25:3)
+    at runAndTransformResultsToJestFormat (D:\Work\react-ci-cd-demo\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:170:21)
+    at jestAdapter (D:\Work\react-ci-cd-demo\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:82:19)
+    at runTestInternal (D:\Work\react-ci-cd-demo\node_modules\jest-runner\build\runTest.js:389:16)
+    at runTest (D:\Work\react-ci-cd-demo\node_modules\jest-runner\build\runTest.js:475:34)
+    at TestRunner.runTests (D:\Work\react-ci-cd-demo\node_modules\jest-runner\build\index.js:101:12)
+    at TestScheduler.scheduleTests (D:\Work\react-ci-cd-demo\node_modules\@jest\core\build\TestScheduler.js:333:13)
+    at runJest (D:\Work\react-ci-cd-demo\node_modules\@jest\core\build\runJest.js:404:19)
+    at _run10000 (D:\Work\react-ci-cd-demo\node_modules\@jest\core\build\cli\index.js:320:7)
+    at runCLI (D:\Work\react-ci-cd-demo\node_modules\@jest\core\build\cli\index.js:173:3)
+    at Object.run (D:\Work\react-ci-cd-demo\node_modules\jest-cli\build\cli\index.js:155:37)</failure>
+    </testcase>
+  </testsuite>
+</testsuites>
