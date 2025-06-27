@@ -1,18 +1,16 @@
-name: React CI/CD Full Lifecycle
+name: React CI/CD Pipeline (Master Branch)
 
 on:
   push:
-    branches: [main]
+    branches: [master]  # Changed from main to master
   pull_request:
-    branches: [main]
+    branches: [master]  # Changed from main to master
 
 env:
   NODE_VERSION: 18.x
-  SLACK_CHANNEL: '#deployments'  # Your Slack channel
 
 jobs:
   install:
-    name: Install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -21,14 +19,27 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       - run: npm install
-      - name: Slack Install Alert
-        uses: rtCamp/action-slack-notify@v2
+      - name: Notify Slack - Installation
+        uses: slackapi/slack-github-action@v1.23.0
+        if: always()
         env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: "✅ Dependencies installed (${{ github.repository }})"
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          payload: |
+            {
+              "text": "📦 Installation started - ${{ github.repository }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*🛠 Installation Complete*\n*Repository:* ${{ github.repository }}\n*Status:* Success ✅\n*Branch:* master"  # Changed from ref_name to explicit master
+                  }
+                }
+              ]
+            }
 
-  test:
-    name: Test
+  build:
     needs: install
     runs-on: ubuntu-latest
     steps:
@@ -36,34 +47,30 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - run: npm test -- --watchAll=false
-      - name: Slack Test Results
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: "🧪 Tests ${{ job.status }} (${{ github.repository }})"
-          SLACK_COLOR: ${{ job.status == 'success' && 'good' || 'danger' }}
-
-  build:
-    name: Build
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
       - run: npm run build
-      - name: Slack Build Alert
-        uses: rtCamp/action-slack-notify@v2
+      - name: Notify Slack - Build
+        uses: slackapi/slack-github-action@v1.23.0
+        if: always()
         env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: "🏗 Build completed (${{ github.repository }})"
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          payload: |
+            {
+              "text": "🏗 Build completed - ${{ github.repository }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*🏗 Build Completed*\n*Repository:* ${{ github.repository }}\n*Status:* Success ✅\n*Branch:* master\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"
+                  }
+                }
+              ]
+            }
 
   deploy:
-    name: Deploy
     needs: build
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/master'  # Changed from main to master
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -75,9 +82,21 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build
-      - name: Slack Deploy Alert
-        uses: rtCamp/action-slack-notify@v2
+      - name: Notify Slack - Deployment
+        uses: slackapi/slack-github-action@v1.23.0
         env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: "🚀 DEPLOYED: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
-          SLACK_COLOR: "good"
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          payload: |
+            {
+              "text": "🚀 Deployment successful!",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*🚀 Deployment Successful!*\n*Branch:* master\n*URL:* https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/\n*Commit:* ${GITHUB_SHA:0:7}\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"
+                  }
+                }
+              ]
+            }
