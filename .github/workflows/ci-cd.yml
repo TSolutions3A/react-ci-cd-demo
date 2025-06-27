@@ -1,0 +1,153 @@
+name: React CI/CD with Slack Notifications
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: 18.x  # Using Node 18 (current LTS version)
+
+jobs:
+  # First job: Install dependencies and run linting
+  setup-and-lint:
+    name: Install & Lint
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repository code
+      - uses: actions/checkout@v3
+      
+      # Set up Node.js with the specified version
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      # Cache node_modules for faster future runs
+      - uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ${{ github.workspace }}/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      
+      # Install dependencies
+      - run: npm install
+      
+      # Run ESLint (make sure you have eslint set up in your project)
+      - run: npm run lint
+      
+      # Send simple Slack notification about lint status
+      - name: Notify Slack (Lint Results)
+        if: always()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_MESSAGE: "Lint check ${{ job.status }} for ${{ github.repository }}"
+          SLACK_COLOR: ${{ job.status == 'success' && 'good' || 'danger' }}
+
+  # Second job: Run tests (depends on lint job completing)
+  test:
+    name: Run Tests
+    needs: setup-and-lint  # Wait for lint job to finish first
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ${{ github.workspace }}/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      
+      # Run tests with JUnit reporter for better reporting
+      - run: npm test -- --watchAll=false --ci --reporters=default --reporters=jest-junit
+      
+      # Upload test results as artifacts
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results
+          path: junit.xml
+      
+      # Send detailed Slack notification with test status
+      - name: Notify Slack (Test Results)
+        if: always()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_MESSAGE: |
+            Tests ${{ job.status }} for ${{ github.repository }}
+            Branch: ${{ github.ref }}
+            Commit: ${{ github.sha }}
+          SLACK_COLOR: ${{ job.status == 'success' && 'good' || 'danger' }}
+
+  # Third job: Build the production app
+  build:
+    name: Build Production
+    needs: test  # Wait for tests to pass first
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ${{ github.workspace }}/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      
+      # Build the production bundle
+      - run: npm run build
+      
+      # Upload build as artifact
+      - uses: actions/upload-artifact@v3
+        with:
+          name: production-build
+          path: build
+      
+      # Simple build notification
+      - name: Notify Slack (Build Complete)
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_MESSAGE: "Production build successful for ${{ github.repository }}"
+          SLACK_COLOR: "good"
+
+  # Final job: Deploy to GitHub Pages (only runs on main branch)
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    if: github.ref == 'refs/heads/main'  # Only deploy from main branch
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      # Download the build artifact from previous job
+      - uses: actions/download-artifact@v3
+        with:
+          name: production-build
+          path: build
+      
+      # Deploy to GitHub Pages
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+      
+      # Deployment success notification
+      - name: Notify Slack (Deployment Success)
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_MESSAGE: |
+            🚀 Successfully deployed to GitHub Pages!
+            URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+            Commit: ${{ github.sha }}
+          SLACK_COLOR: "good"
+          SLACK_TITLE: "Deployment Complete"
