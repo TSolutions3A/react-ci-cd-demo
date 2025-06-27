@@ -1,99 +1,33 @@
-name: React CI/CD Pipeline (Master Branch)
+name: React CI/CD Deployment
 
 on:
   push:
     branches: [master]
-  pull_request:
-    branches: [master]
-
-env:
-  NODE_VERSION: 18.x
 
 jobs:
-  install:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      - run: npm install
-      - name: Notify Slack - Installation
-        uses: slackapi/slack-github-action@v1.23.0
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        with:
-          payload: '{"text":"📦 Installation succeeded - ${{ github.repository }}","blocks":[{"type":"section","text":{"type":"mrkdwn","text":"*🛠 Installation Complete*\n*Repository:* ${{ github.repository }}\n*Status:* Success ✅\n*Branch:* master"}}]}'
-
-  build:
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      - run: npm install  # Re-install to ensure dependencies are available
-      - run: npm run build --if-present
-      - name: Notify Slack - Build
-        uses: slackapi/slack-github-action@v1.23.0
-        if: always()
-        env:
-            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        with:
-          payload: |
-            {
-                "text": "🏗 Build ${{ job.status }} - ${{ github.repository }}",
-                "blocks": [
-                {
-                    "type": "section", 
-                    "text": {
-                    "type": "mrkdwn",
-                    "text": "*🏗 Build ${{ job.status }}*\n*Repository:* ${{ github.repository }}\n*Status:* ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}\n*Branch:* master\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"
-                    }
-                }
-                ]
-            }
-
   deploy:
-    needs: build
-    if: github.ref == 'refs/heads/master' && needs.build.result == 'success'
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0  # Gets complete git history
-        persist-credentials: true  # Crucial for deployment auth
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ env.NODE_VERSION }}
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
 
-    - name: Install dependencies
-      run: npm ci  # Clean install for consistency
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Build project
-      run: npm run build
+      - name: Build project
+        run: npm run build
 
-    - name: Configure Git
-      run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
-        git config --global http.postBuffer 524288000  # Helps with large repos
-
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./build
-        publish_branch: gh-pages  # Explicit branch name
-        force_orphan: true  # Clean deployment history
-        cname: ${{ github.repository_owner }}.github.io  # Ensure proper CNAME
-
-    - name: Verify deployment
-      run: |
-        echo "Deployed to: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          enable_jekyll: false  # Important for React apps
+          keep_files: false  # Clean deployment
