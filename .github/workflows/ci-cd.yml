@@ -70,7 +70,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - run: npm run install
+      - run: npm install
       - run: npm run build
       - run: npm run start
 
